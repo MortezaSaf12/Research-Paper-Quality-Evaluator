@@ -3,6 +3,9 @@ const errorMessage = document.getElementById('error-message');
 const fileInput = document.getElementById('fileElem');
 const selectButton = document.querySelector('.button');
 const removeButton = document.getElementById('removeButton');
+const selectedFilesDiv = document.getElementById('selected-files');
+const actionButtons = document.querySelector('.action-buttons');
+const evaluateButton = document.getElementById('evaluate-button');
 
 // Create elements for showing results
 const resultContainer = document.createElement('div');
@@ -13,9 +16,12 @@ document.querySelector('.container').appendChild(resultContainer);
 // Loading spinner
 const loadingSpinner = document.createElement('div');
 loadingSpinner.className = 'spinner';
-loadingSpinner.innerHTML = '<div class="loader"></div><p>Evaluating paper with Gemini AI...</p>';
+loadingSpinner.innerHTML = '<div class="loader"></div><p>Evaluating papers with Gemini AI...</p>';
 document.querySelector('.container').appendChild(loadingSpinner);
 loadingSpinner.style.display = 'none';
+
+// Store selected files
+let selectedFiles = [];
 
 // All scenarios of dragging on the "border"
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -44,28 +50,102 @@ function handleDrop(e) {
   handleFiles(files);
 }
 
-// Main: Send file to server
+// Main: Process selected files
 function handleFiles(files) {
   errorMessage.textContent = "";
-  resultContainer.innerHTML = "";
-  const file = files[0];
-
-  // Validate PDF files
-  if (file && file.type !== 'application/pdf') {
-    errorMessage.textContent = "Invalid file type. Please upload a PDF.";
+  
+  // Validate files are PDFs
+  const validFiles = Array.from(files).filter(file => file.type === 'application/pdf');
+  
+  if (validFiles.length === 0) {
+    errorMessage.textContent = "Please select PDF files only.";
     return;
   }
-
-  if (file) {
-    // Shows file name, displays remove button
-    selectButton.textContent = file.name;
+  
+  if (files.length !== validFiles.length) {
+    errorMessage.textContent = "Some files were rejected. Only PDF files are accepted.";
+  }
+  
+  // Add only valid files, i.e pdf files and none other
+  selectedFiles = [...selectedFiles, ...validFiles];
+  updateFileList();
+  
+  // Show button if we got file
+  if (selectedFiles.length > 0) {
     removeButton.style.display = "inline-block";
-    console.log("Accepted file:", file.name);
-    uploadFile(file);
+    selectedFilesDiv.style.display = "block";
+    actionButtons.style.display = "flex";
+    selectButton.textContent = "Add More Files";
   }
 }
 
-function uploadFile(file) {
+// Updates the file lists on which one are uploaded
+function updateFileList() {
+  selectedFilesDiv.innerHTML = "";
+  
+  if (selectedFiles.length === 0) {
+    selectedFilesDiv.style.display = "none";
+    actionButtons.style.display = "none";
+    removeButton.style.display = "none";
+    selectButton.textContent = "Select PDF Files";
+    return;
+  }
+  
+  const filesList = document.createElement('ul');
+  selectedFiles.forEach((file, index) => {
+    const fileItem = document.createElement('li');
+    fileItem.innerHTML = `
+      <span class="file-name">${file.name}</span>
+      <span class="file-size">(${formatFileSize(file.size)})</span>
+      <button class="remove-file-btn" data-index="${index}">✕</button>
+    `;
+    filesList.appendChild(fileItem);
+  });
+  
+  selectedFilesDiv.appendChild(filesList);
+  
+  // remove button
+  document.querySelectorAll('.remove-file-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = parseInt(e.target.getAttribute('data-index'));
+      selectedFiles.splice(index, 1);
+      updateFileList();
+    });
+  });
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' bytes';
+  else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  else return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+// Remove all files
+removeButton.addEventListener('click', function() {
+  fileInput.value = "";
+  selectedFiles = [];
+  updateFileList();
+  resultContainer.innerHTML = "";
+  errorMessage.textContent = "";
+});
+
+// button click scenarios
+evaluateButton.addEventListener('click', function() {
+  if (selectedFiles.length === 0) {
+    errorMessage.textContent = "Please select at least one PDF file.";
+    return;
+  }
+  
+  if (selectedFiles.length === 1) {
+    // one file
+    uploadSingleFile(selectedFiles[0]);
+  } else {
+    // multiple files
+    uploadMultipleFiles(selectedFiles);
+  }
+});
+
+function uploadSingleFile(file) {
   const formData = new FormData();
   formData.append('pdf', file);
 
@@ -77,7 +157,6 @@ function uploadFile(file) {
   })
     .then(res => res.json())
     .then(data => {
-      console.log('Upload response:', data);
       if (!data.success) {
         throw new Error(data.error || 'File upload failed');
       }
@@ -92,14 +171,53 @@ function uploadFile(file) {
     .then(evalResult => {
       loadingSpinner.style.display = 'none';
       
-      console.log('Evaluation result:', evalResult);
       if (!evalResult.success) {
         throw new Error(evalResult.error || 'Evaluation failed');
       }
-        displayEvaluation(evalResult.evaluation);
+      displayEvaluation(evalResult.evaluation);
     })
     .catch(err => {
-      // Hide loading spinner
+      loadingSpinner.style.display = 'none';
+      console.error(err);
+      errorMessage.textContent = err.message || "An error occurred during processing";
+    });
+}
+
+function uploadMultipleFiles(files) {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('pdfs', file);
+  });
+
+  loadingSpinner.style.display = 'flex';
+  resultContainer.innerHTML = "";
+  
+  fetch('/api/pdf/upload-multiple', {
+    method: 'POST',
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        throw new Error(data.error || 'File upload failed');
+      }
+      
+      return fetch('/api/pdf/evaluate-compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileIds: data.fileIds })
+      });
+    })
+    .then(res => res.json())
+    .then(evalResult => {
+      loadingSpinner.style.display = 'none';
+      
+      if (!evalResult.success) {
+        throw new Error(evalResult.error || 'Comparison failed');
+      }
+      displayComparison(evalResult.evaluation);
+    })
+    .catch(err => {
       loadingSpinner.style.display = 'none';
       console.error(err);
       errorMessage.textContent = err.message || "An error occurred during processing";
@@ -108,7 +226,17 @@ function uploadFile(file) {
 
 function displayEvaluation(evaluation) {
   resultContainer.innerHTML = `
-    <h2>PRISMA Evaluation Results</h2>
+    <h2>Paper Evaluation Results</h2>
+    <div class="evaluation-content">
+      ${formatEvaluation(evaluation)}
+    </div>
+  `;
+  resultContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+function displayComparison(evaluation) {
+  resultContainer.innerHTML = `
+    <h2>Paper Comparison Results</h2>
     <div class="evaluation-content">
       ${formatEvaluation(evaluation)}
     </div>
@@ -130,13 +258,3 @@ function formatEvaluation(text) {
     .replace(/<li>(.*?)<\/li>/g, '<ul><li>$1</li></ul>')
     .replace(/<\/ul><ul>/g, '');
 }
-
-// Remove logic
-removeButton.addEventListener('click', function() {
-  fileInput.value = "";
-  selectButton.textContent = "Select PDF File";
-  errorMessage.textContent = "";
-  removeButton.style.display = "none";
-  resultContainer.innerHTML = "";
-  console.log("File removed.");
-});

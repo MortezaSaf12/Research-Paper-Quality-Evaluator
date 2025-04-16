@@ -3,24 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> Reserach Paper Evaluation</title>
+  <title>Research Paper Evaluation</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css?family=Merriweather:400,700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Reserach Paper Evaluator</h1>
-      <p>Upload your research paper PDF for evaluation</p>
+      <h1>Research Paper Evaluator</h1>
+      <p>Upload your research papers for evaluation and comparison</p>
     </header>
     
     <div id="drop-area">
       <form class="my-form">
-        <p>Drag & Drop a PDF here or click to select</p>
-        <input type="file" id="fileElem" accept="application/pdf" onchange="handleFiles(this.files)">
-        <label class="button" for="fileElem">Select PDF File</label>
-        <label class="removeButton" id="removeButton" style="display: none;">X</label>
+        <p>Drag & Drop PDFs here or click to select</p>
+        <input type="file" id="fileElem" accept="application/pdf" multiple onchange="handleFiles(this.files)">
+        <label class="button" for="fileElem">Select PDF Files</label>
+        <label class="removeButton" id="removeButton" style="display: none;">Clear Files</label>
       </form>
+    </div>
+    
+    <div id="selected-files" class="selected-files" style="display: none;"></div>
+    
+    <div class="action-buttons" style="display: none;">
+      <button id="evaluate-button" class="button">Evaluate & Compare Papers</button>
     </div>
     
     <div id="error-message" class="error-message"></div>
