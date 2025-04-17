@@ -1,0 +1,159 @@
+Research Paper Quality Evaluation Guidelines
+Based on "How to Rate the Quality of a Research Paper: Introducing a Helpful Algorithm for Architects and Designers"
+Background and Purpose
+The critical appraisal of evidence presented in research papers is an essential step in evidence-based design (EBD), which aims to transfer research findings into design practice. These guidelines provide a systematic method to evaluate research paper quality, particularly targeted for those without extensive training in research methodology.
+
+The Evidence-Based Design Process
+The EBD process follows a six-step circular approach:
+
+Define the research question and develop a research strategy
+Acquire and select relevant papers
+Critically appraise the quality of research studies
+Weigh the evidence by combining results from multiple studies
+Develop design recommendations (scaled from weak to strong)
+Implement and evaluate design decisions
+This guideline focuses specifically on step 3: critically appraising the quality of individual research studies.
+
+Understanding Quality of Evidence
+Quality of evidence is defined as "the extent to which a study's design, conduct, and analysis has minimized selection, measurement, and confounding bias." The better a study protects against bias and error, the higher the quality of the results produced.
+
+Key methods to protect against bias include:
+
+Group allocation: Dividing participants into treatment and control groups
+Randomization: Random allocation of participants to groups
+Blinding: Neither participants nor researchers know which group a participant belongs to (double-blind)
+Hierarchical Levels of Evidence
+For classification of research studies, hierarchical levels of evidence have been established. These indicate the confidence given to the validity of results.
+
+Evidence Levels for Research Papers
+Level 1
+
+Systematic reviews of multiple randomized controlled trials (RCTs) or nonrandomized studies
+Meta-analysis of multiple experimental or quasi-experimental studies
+Meta-synthesis of multiple qualitative studies leading to an integrative interpretation
+Level 2
+
+Well-designed experimental (randomized) studies
+Well-designed quasi-experimental (nonrandomized) studies
+Both with consistent results compared to other, similar studies
+Level 3
+
+Observational studies
+Well-designed qualitative studies
+Integrative or systematic reviews of observational or qualitative studies
+RCT or quasi-experimental studies with inconsistent results compared to other, similar studies
+Level 4
+
+Professional standards or guidelines with studies to support recommendations
+Level 5
+
+Opinions of recognized experts
+Case studies
+Level 6
+
+Recommendations from manufacturers or consultants who may have a financial interest or bias
+Algorithm for Rating Evidence Quality
+This algorithm guides users through a flow chart to determine study design and assign the appropriate evidence level. There are two main flow charts depending on the nature of the study.
+
+Initial Decision: Choose the Correct Flow Chart
+Start by answering: "Was a singular study or measurement conducted?"
+
+If YES: Use Flow Chart 1 (for papers based on investigations)
+If NO: Use Flow Chart 2 (for papers based on multiple investigations, such as reviews)
+Flow Chart 1: Algorithm for Studies Based on a Singular Investigation
+Question 1: "Did the investigator assign interventions or exposures?"
+This determines whether the researcher actively modified anything (e.g., building features, lighting, floor covering).
+
+If YES: The study is an experiment or quasi-experiment. Proceed to Question 1A.
+If NO: The study is an observational or qualitative study. Proceed to Question 1B.
+Question 1A: "Was the group allocation assigned randomly?"
+If YES: The study is an experimental study (randomized controlled trial or RCT).
+If well-conducted, assign Level 2; otherwise Level 3.
+Criteria for "well-conducted":
+Two separate groups (treatment and control)
+Low attrition rate (<20%)
+Intention-to-treat analysis
+Consistent results
+High quality of masked randomization
+High quality of blinding
+If NO: The study is a quasi-experimental study.
+If well-conducted, assign Level 2; otherwise Level 3.
+Criteria for "well-conducted":
+Two separate groups (treatment and control) when possible
+Low attrition rate (<20%)
+Intention-to-treat analysis
+Consistent results
+Question 1B: "Was there a numerical or statistical analysis?"
+If YES: The study is an observational study. Assign Level 3.
+Types of observational studies:
+Panel study: A sample followed over time, measuring effects of exposures
+Cohort study: Comparing subsamples with different characteristics
+Case-control study: Comparing individuals with and without a condition, looking backward for causes
+Cross-sectional study: Observations at a single point in time to find correlations
+If NO: The study is a qualitative study.
+If the study is based on a literature review and conceptual framework, contains a report on information collection and analysis methods, and develops an account of different views while recognizing diversity: Assign Level 3.
+Otherwise: Assign Level 5.
+Flow Chart 2: Algorithm for Studies Based on Multiple Investigations
+Question 2: "Is there a systematic approach?"
+A systematic approach includes a literature review, clearly stated research objective, and a description of the process to gather comprehensive evidence.
+
+If NO: The paper is non-systematic. Further classification needed:
+Recommendations from manufacturers or consultants: Assign Level 6
+Opinions of recognized experts: Assign Level 5
+Professional organizational standards or guidelines with supporting studies: Assign Level 4
+Professional organizational standards or guidelines without supporting studies: Assign Level 5
+If YES: The paper is a systematic review, meta-analysis, meta-synthesis, or integrative review. Proceed to Question 2A.
+Question 2A: "Does the paper offer a meta-analysis or meta-synthesis of the reviewed paper's results?"
+If YES: Assign Level 1
+If NO: Proceed to Question 2B
+Question 2B: "Does the review include studies with experimental or quasi-experimental design?"
+If YES: Assign Level 1
+If NO: Assign Level 3
+Special Case: Post-Occupancy Evaluation (POE)
+Post-Occupancy Evaluations often employ mixed methods from observational and qualitative studies.
+
+Determine which method or study design is used predominantly
+Or classify evidence from different parts separately
+Examples:
+Numerical data analysis on residents' use of hallways: Level 3 (observational)
+Focus group content: Level 3 or 5 depending on quality (qualitative)
+Application Guidelines for Quality Assessment
+When evaluating a research paper:
+
+Determine if the paper describes a singular study or is based on multiple studies
+Follow the appropriate flow chart based on the study type
+Answer the questions in sequence to identify the study design
+Apply the criteria to assign the correct evidence level
+Consider whether the study is well-conducted according to the specific criteria
+For mixed method studies, evaluate each component separately
+Weighing Evidence After Quality Assessment
+After determining the quality level of individual studies, the next step is to weigh the evidence by:
+
+Combining results from several studies on the chosen research question
+Considering external factors such as evidence consistency, relevance, and external validity
+Developing scaled design recommendations (weak to strong) based on quality and weight
+Implementing and evaluating design decisions
+Quantitative vs. Qualitative Assessment
+When evaluating papers, identify:
+
+Whether the study is quantitative (using numerical or statistical analysis) or qualitative (interpretative classification)
+The source of data (interviews, questionnaires, observations, measurements)
+The methodology used (experimental, observational, case study)
+Sample sizes and randomization procedures
+Whether conclusions are supported by the evidence presented
+Practical Evaluation Steps
+Read the paper's methodology section carefully
+Identify the type of study using the flow charts
+Assess whether the methodology is appropriate for the research question
+Check if the study meets the criteria for being well-conducted
+Assign the evidence level
+Note strengths and limitations of the study design
+Consider how the evidence might be applied in practice
+Comparing Evidence Across Studies
+When comparing multiple papers on the same topic:
+
+Rank the papers by evidence level (Level 1 being highest quality)
+For papers with the same level, compare based on sample size, methodological rigor, and applicability
+Consider doing pair comparisons when evaluating multiple papers
+Identify consistencies and contradictions in findings
+Give greater weight to higher-quality evidence
