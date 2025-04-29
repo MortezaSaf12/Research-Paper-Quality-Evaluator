@@ -16,7 +16,7 @@ document.querySelector('.container').appendChild(resultContainer);
 // Loading spinner
 const loadingSpinner = document.createElement('div');
 loadingSpinner.className = 'spinner';
-loadingSpinner.innerHTML = '<div class="loader"></div><p>Evaluating papers with Gemini AI...</p>';
+loadingSpinner.innerHTML = '<div class="loader"></div><p>Evaluating papers with GPT-4 Mini...</p>';
 document.querySelector('.container').appendChild(loadingSpinner);
 loadingSpinner.style.display = 'none';
 
@@ -244,9 +244,10 @@ function displayComparison(evaluation) {
   resultContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
+// In the formatEvaluation function of Main.js, add support for tables
 function formatEvaluation(text) {
   // Convert markdown-like text from Gemini to HTML
-  return text
+  let formatted = text
     .replace(/\n\n/g, '</p><p>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -257,4 +258,51 @@ function formatEvaluation(text) {
     .replace(/^- (.*?)$/gm, '<li>$1</li>')
     .replace(/<li>(.*?)<\/li>/g, '<ul><li>$1</li></ul>')
     .replace(/<\/ul><ul>/g, '');
+    
+  // Handle tables - look for pipes and convert to HTML tables
+  if (text.includes('|')) {
+    const tableRegex = /([^\n]*\|[^\n]*(\n|$))+/g;
+    const tables = text.match(tableRegex);
+    
+    if (tables) {
+      tables.forEach(table => {
+        const htmlTable = convertMarkdownTableToHtml(table);
+        formatted = formatted.replace(table, htmlTable);
+      });
+    }
+  }
+  
+  return formatted;
+}
+
+function convertMarkdownTableToHtml(markdownTable) {
+  const rows = markdownTable.trim().split('\n');
+  let html = '<table class="comparison-table">';
+  
+  // Process header row
+  const headerCells = rows[0].split('|').filter(cell => cell.trim() !== '');
+  html += '<thead><tr>';
+  headerCells.forEach(cell => {
+    html += `<th>${cell.trim()}</th>`;
+  });
+  html += '</tr></thead>';
+  
+  // Skip separator row if it exists (row with dashes)
+  const startRow = rows[1] && rows[1].includes('---') ? 2 : 1;
+  
+  // Process data rows
+  html += '<tbody>';
+  for (let i = startRow; i < rows.length; i++) {
+    if (rows[i].trim() === '') continue;
+    
+    const cells = rows[i].split('|').filter(cell => cell.trim() !== '');
+    html += '<tr>';
+    cells.forEach(cell => {
+      html += `<td>${cell.trim()}</td>`;
+    });
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  
+  return html;
 }

@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-console.log("API Key:", process.env.GEMINI_API_KEY);
+console.log("API Key:", process.env.OPENAI_API_KEY); // Updated to use OPENAI_API_KEY
 
 const pdfRoutes = require('./Routes/pdfRoutes');
 
