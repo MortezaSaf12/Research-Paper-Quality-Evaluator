@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const uuid = require('uuid');
-const GeminiService = require('../Services/GeminiService');
-const geminiService = new GeminiService(); // ← THIS is the missing piece
+const OpenAIService = require('../Services/OpenAIService');
+const openaiService = new OpenAIService();
 
 // Temporary in-memory store for uploaded files
 const uploadedFiles = {};
@@ -39,7 +39,7 @@ exports.evaluatePaper = async (req, res) => {
     }
 
     const file = uploadedFiles[fileId];
-    const evaluationResult = await geminiService.evaluatePaper(file);
+    const evaluationResult = await openaiService.evaluatePaper(file);
 
     if (!evaluationResult.success) {
       return res.status(500).json({
@@ -113,9 +113,9 @@ exports.evaluateAndComparePapers = async (req, res) => {
 
     let comparisonResult;
     if (files.length === 1) {
-      comparisonResult = await geminiService.evaluatePaper(files[0]);
+      comparisonResult = await openaiService.evaluatePaper(files[0]);
     } else {
-      comparisonResult = await geminiService.comparePapers(files);
+      comparisonResult = await openaiService.comparePapers(files);
     }
 
     if (!comparisonResult.success) {

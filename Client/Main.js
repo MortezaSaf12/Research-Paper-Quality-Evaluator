@@ -16,7 +16,7 @@ document.querySelector('.container').appendChild(resultContainer);
 // Loading spinner
 const loadingSpinner = document.createElement('div');
 loadingSpinner.className = 'spinner';
-loadingSpinner.innerHTML = '<div class="loader"></div><p>Evaluating papers with Gemini AI...</p>';
+loadingSpinner.innerHTML = '<div class="loader"></div><p>Evaluating papers with GPT-4o-mini...</p>';
 document.querySelector('.container').appendChild(loadingSpinner);
 loadingSpinner.style.display = 'none';
 
@@ -245,7 +245,7 @@ function displayComparison(evaluation) {
 }
 
 function formatEvaluation(text) {
-  // Convert markdown-like text from Gemini to HTML
+  // Convert markdown-like text from OpenAI to HTML
   return text
     .replace(/\n\n/g, '</p><p>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
