@@ -1,21 +1,22 @@
-const OpenAI = require("openai");
 const fs = require('fs');
 const path = require('path');
+const OpenAI = require("openai");
+const pdf = require('pdf-parse');
 
 class OpenAIService {
   constructor() {
     this.openai = new OpenAI({
       apiKey: process.env.SECRET_OPENAI_KEY,
     });
-    this.model = "gpt-4o-mini"; // Using the 4o-mini model as specified
+    this.model = "gpt-4o-mini";
     this.guidelinesPath = path.join(__dirname, '../guidelines.txt');
     this.guidelines = fs.readFileSync(this.guidelinesPath, 'utf8');
   }
 
   async evaluatePaper(file) {
     try {
-      // Convert file to proper format for OpenAI API
-      const fileData = await this.fileToOpenAIPart(file);
+      // Extract text content from the file based on its type
+      const fileContent = await this.extractFileContent(file);
       
       const prompt = `
 You are an academic research paper evaluator with expertise in evaluating scientific methodology and evidence quality. Your task is to evaluate the attached research paper comprehensively using the evaluation framework detailed below.
@@ -57,6 +58,9 @@ Then, provide a structured evaluation including:
 - State how applicable the findings are in practice.
 
 Please format your response clearly using headings and bullet points. Refer to specific sections of the uploaded research paper wherever applicable.
+
+## PAPER CONTENT:
+${fileContent}
 `;
       
       // Generate content with the OpenAI model
@@ -69,10 +73,7 @@ Please format your response clearly using headings and bullet points. Refer to s
           },
           {
             role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "file_path", file_path: fileData }
-            ]
+            content: prompt
           }
         ]
       });
@@ -90,22 +91,35 @@ Please format your response clearly using headings and bullet points. Refer to s
     }
   }
 
-  async fileToOpenAIPart(file) {
+  // New method to extract content from files based on their type
+  async extractFileContent(file) {
     try {
-      // Upload the file to OpenAI
-      const fileUpload = await this.openai.files.create({
-        file: fs.createReadStream(file.path),
-        purpose: "assistants"
-      });
+      const fileExtension = path.extname(file.originalname).toLowerCase();
       
-      // Return the file ID for use in API calls
-      return fileUpload.id;
+      // Handle PDF files
+      if (fileExtension === '.pdf') {
+        console.log(`Processing PDF file: ${file.originalname}`);
+        const dataBuffer = fs.readFileSync(file.path);
+        const pdfData = await pdf(dataBuffer);
+        return pdfData.text;
+      }
+      // Handle text files
+      else if (['.txt', '.md', '.rtf'].includes(fileExtension)) {
+        console.log(`Processing text file: ${file.originalname}`);
+        return fs.readFileSync(file.path, 'utf8');
+      }
+      // Handle other file types that might be supported in the future
+      else {
+        console.log(`Unsupported file type: ${fileExtension}, attempting to process as text`);
+        return fs.readFileSync(file.path, 'utf8');
+      }
     } catch (error) {
-      console.error("Error uploading file to OpenAI:", error);
-      throw new Error("Failed to upload file to OpenAI");
+      console.error(`Error extracting content from file: ${file.originalname}`, error);
+      throw new Error(`Failed to extract content from file: ${file.originalname}`);
     }
   }
 
+  // This method is modified to use direct content instead of file paths
   async comparePapers(files) {
     try {
       // First evaluate each paper individually to get detailed analysis
@@ -179,10 +193,10 @@ Based on the guidelines for evaluating research quality, provide your comprehens
     }
   }
 
-  // Extract key information from a paper to create a concise summary
+  // Modified to use direct content extraction
   async extractPaperSummary(file) {
     try {
-      const fileId = await this.fileToOpenAIPart(file);
+      const fileContent = await this.extractFileContent(file);
       
       const extractPrompt = `
 Extract the key information from this research paper that would be relevant for evaluating its quality. Focus on:
@@ -195,6 +209,9 @@ Extract the key information from this research paper that would be relevant for 
 6. Limitations acknowledged by authors
 
 Keep your response concise but comprehensive, highlighting information that would help determine the evidence level (1-6) according to research evaluation guidelines.
+
+## PAPER CONTENT:
+${fileContent}
 `;
 
       const response = await this.openai.chat.completions.create({
@@ -206,10 +223,7 @@ Keep your response concise but comprehensive, highlighting information that woul
           },
           {
             role: "user",
-            content: [
-              { type: "text", text: extractPrompt },
-              { type: "file_path", file_path: fileId }
-            ]
+            content: extractPrompt
           }
         ]
       });
@@ -398,6 +412,22 @@ Respond with:
     result += `\n## Key Findings Visualization\n\nA radar chart or bar chart comparing the key methodological aspects of these papers would be beneficial for visualization.\n`;
     
     return result;
+  }
+  
+  async fileToOpenAIPart(file) {
+    try {
+      // Upload the file to OpenAI
+      const fileUpload = await this.openai.files.create({
+        file: fs.createReadStream(file.path),
+        purpose: "assistants"
+      });
+      
+      // Return the file ID for use in API calls
+      return fileUpload.id;
+    } catch (error) {
+      console.error("Error uploading file to OpenAI:", error);
+      throw new Error("Failed to upload file to OpenAI");
+    }
   }
 }
 
