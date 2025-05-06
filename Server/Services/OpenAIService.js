@@ -15,61 +15,48 @@ class OpenAIService {
 
   async evaluatePaper(file) {
     try {
-      // Extract text content from the file based on its type
+      // Extract text content from the file
       const fileContent = await this.extractFileContent(file);
       
       const prompt = `
-You are an academic research paper evaluator with expertise in evaluating scientific methodology and evidence quality. Your task is to evaluate the attached research paper comprehensively using the evaluation framework detailed below.
+You are an academic research paper evaluator with expertise in scientific methodology and evidence quality. Your task is to extract and evaluate key findings from the attached research paper using the evaluation framework detailed below.
 
 ## EVIDENCE QUALITY ASSESSMENT GUIDELINES
 ${this.guidelines}
 
 ## EVALUATION INSTRUCTIONS
-Use the guideline to:
-1. Determine the type of study (e.g., experimental, observational, qualitative, systematic review, etc.).
-2. Use the appropriate flowchart and algorithm to assign an **Evidence Level** from 1 to 6.
-3. Justify your classification by referencing the relevant criteria from the guideline.
+1. Extract 3-5 main key findings from the research paper.
+2. For each key finding, provide the following structure:
 
-Then, provide a structured evaluation including:
+### Key Finding #[number]
+- **Criteria**: What this finding is about (e.g., a specific intervention, observation, or relationship)
+- **Value**: The specific result or outcome that was discovered
+- **Evidence Level**: Assign an evidence level (1-6) based on the guidelines and justify this classification
+- **Source**: The title of the paper where this finding is from
+- **Methodology Quality**: Brief assessment of how the finding was determined (sample size, controls, etc.)
+- **Importance**: Why this finding matters in the context of the research field
 
-### 1. Study Type and Evidence Level
-- Identify the study design.
-- Assign an evidence level (1-6) and explain why it was assigned.
-- Reference key criteria used from the guideline.
+### Format Example (Do not use tables):
+Key Finding #1
+- Criteria: [Subject of finding]
+- Value: [Specific result/outcome]
+- Evidence Level: [1-6] - [Brief justification]
+- Source: [Paper title]
+- Methodology Quality: [Brief assessment]
+- Importance: [Why this matters]
 
-### 2. Methodological Assessment
-- Evaluate whether the study design is appropriate for its research question.
-- Check for protection against bias: randomization, blinding, and group allocation.
-- Note if the methodology meets the standards for being "well-conducted."
-
-### 3. Quantitative or Qualitative Nature
-- Specify whether the paper uses quantitative, qualitative, or mixed methods.
-- Mention sources of data and how they were analyzed.
-
-### 4. Strengths and Limitations
-- Highlight major strengths of the research design.
-- Point out any significant weaknesses or risks of bias.
-- Consider sample size, clarity of research methods, and analytical rigor.
-
-### 5. Overall Evaluation
-- Provide a quality score from 1 to 10 with reasoning.
-- Comment on the trustworthiness and relevance of the findings.
-- Suggest improvements or clarifications if needed.
-- State how applicable the findings are in practice.
-
-Please format your response clearly using headings and bullet points. Refer to specific sections of the uploaded research paper wherever applicable.
+Apply the appropriate evidence level classification from the guidelines.txt for each finding to determine it
 
 ## PAPER CONTENT:
 ${fileContent}
 `;
       
-      // Generate content with the OpenAI model
       const response = await this.openai.chat.completions.create({
         model: this.model,
         messages: [
           {
             role: "system",
-            content: "You are an academic research paper evaluator with expertise in scientific methodology."
+            content: "You are an academic research paper evaluator focused on extracting and evaluating key findings according to evidence quality guidelines."
           },
           {
             role: "user",
@@ -91,7 +78,6 @@ ${fileContent}
     }
   }
 
-  // New method to extract content from files based on their type
   async extractFileContent(file) {
     try {
       const fileExtension = path.extname(file.originalname).toLowerCase();
@@ -103,12 +89,12 @@ ${fileContent}
         const pdfData = await pdf(dataBuffer);
         return pdfData.text;
       }
-      // Handle text files
+     //handle other files
       else if (['.txt', '.md', '.rtf'].includes(fileExtension)) {
         console.log(`Processing text file: ${file.originalname}`);
         return fs.readFileSync(file.path, 'utf8');
       }
-      // Handle other file types that might be supported in the future
+  
       else {
         console.log(`Unsupported file type: ${fileExtension}, attempting to process as text`);
         return fs.readFileSync(file.path, 'utf8');
@@ -119,50 +105,45 @@ ${fileContent}
     }
   }
 
-  // This method is modified to use direct content instead of file paths
+  // comparing multiple papers
   async comparePapers(files) {
     try {
-      // First evaluate each paper individually to get detailed analysis
-      console.log(`Evaluating ${files.length} papers individually...`);
-      const evaluations = [];
-      
-      for (const file of files) {
-        console.log(`Evaluating paper: ${file.originalname}`);
-        // Extract only key information for each paper to avoid token overload
-        const summary = await this.extractPaperSummary(file);
-        evaluations.push({
+    
+      const paperContents = await Promise.all(files.map(async (file) => {
+        const content = await this.extractFileContent(file);
+        return {
           filename: file.originalname,
-          summary: summary
-        });
-      }
+          content: content
+        };
+      }));
       
-      // Now compare the papers based on their evaluations
-      console.log("Generating comparison between papers...");
-      
+      // Multiple paper comparison prompt
       const comparisonPrompt = `
-You are an expert academic evaluator tasked with comparing multiple research papers. Based on the summaries provided below, create a comprehensive comparison highlighting the strengths and weaknesses of each paper, focusing specifically on:
+You are an expert academic evaluator tasked with comparing key findings across multiple research papers. Based on the content provided below:
 
-1. Research methodology (rigor, appropriateness for research question, protection against bias)
-2. Evidence level (based on the 1-6 scale from the guidelines)
-3. Key findings and their significance
-4. Overall quality and trustworthiness of results
+1. Extract 3-5 key findings from each paper
+2. For each key finding, provide:
+   - Criteria: What this finding is about
+   - Value: The specific result or outcome discovered
+   - Evidence Level: (1-6) based on the guidelines with justification
+   - Source: Title of the paper
+   - Methodology Quality: Brief assessment of methods used
+   - Importance: Significance of this finding
 
-For each paper, provide a numerical quality score from 1-10, with clear justification for your rating.
+3. Then create a consolidated list of the most important findings across all papers, ranked by evidence quality (using the 1-6 scale from the guidelines)
 
-Then create an overall ranking of the papers from highest to lowest quality, with a brief explanation of why each paper earned its position in the ranking.
+4. Provide a brief synthesis of how these findings relate to each other and what overall conclusions can be drawn
 
-Present this comparison in a structured format with clear sections for:
-- Individual paper assessments (methodology, evidence level, quality score)
-- Comparative analysis (strengths/weaknesses across papers)
-- Final ranking with justification
+## EVIDENCE QUALITY ASSESSMENT GUIDELINES
+${this.guidelines}
 
-Paper summaries:
-${evaluations.map((evaluation, index) => `
-PAPER ${index + 1}: ${evaluation.filename}
-${evaluation.summary}
-`).join('\n---\n')}
+## PAPERS:
+${paperContents.map((paper, index) => `
+PAPER ${index + 1}: ${paper.filename}
+${paper.content.substring(0, 8000)}... [content truncated for token limit]
+`).join('\n---\n')} 
 
-Based on the guidelines for evaluating research quality, provide your comprehensive comparison and ranking.
+Present your findings in a clear, structured format without using tables. Number each key finding and organize them by paper first, then provide the consolidated ranking.
 `;
 
       const response = await this.openai.chat.completions.create({
@@ -170,7 +151,7 @@ Based on the guidelines for evaluating research quality, provide your comprehens
         messages: [
           {
             role: "system",
-            content: "You are an expert academic evaluator comparing multiple research papers."
+            content: "You are an expert academic evaluator extracting and comparing key findings across multiple research papers according to evidence quality guidelines."
           },
           {
             role: "user",
@@ -190,243 +171,6 @@ Based on the guidelines for evaluating research quality, provide your comprehens
         success: false,
         error: error.message || "Error comparing papers with OpenAI"
       };
-    }
-  }
-
-  // Modified to use direct content extraction
-  async extractPaperSummary(file) {
-    try {
-      const fileContent = await this.extractFileContent(file);
-      
-      const extractPrompt = `
-Extract the key information from this research paper that would be relevant for evaluating its quality. Focus on:
-
-1. Study design and methodology
-2. Data collection methods
-3. Sample size and characteristics
-4. Key findings and results
-5. Statistical methods used (if applicable)
-6. Limitations acknowledged by authors
-
-Keep your response concise but comprehensive, highlighting information that would help determine the evidence level (1-6) according to research evaluation guidelines.
-
-## PAPER CONTENT:
-${fileContent}
-`;
-
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert at extracting key methodological information from research papers."
-          },
-          {
-            role: "user",
-            content: extractPrompt
-          }
-        ]
-      });
-      
-      return response.choices[0].message.content;
-    } catch (error) {
-      console.error("Error extracting paper summary:", error);
-      throw new Error("Failed to extract paper summary");
-    }
-  }
-  
-  // Pairwise comparison method for more objective ranking
-  async comparePapersPairwise(files) {
-    try {
-      // First evaluate each paper individually
-      console.log(`Evaluating ${files.length} papers individually...`);
-      const evaluations = [];
-      
-      for (const file of files) {
-        console.log(`Evaluating paper: ${file.originalname}`);
-        const evalResult = await this.evaluatePaper(file);
-        if (!evalResult.success) {
-          throw new Error(`Failed to evaluate paper: ${file.originalname}`);
-        }
-        evaluations.push({
-          filename: file.originalname,
-          evaluation: evalResult.evaluation
-        });
-      }
-      
-      // Create all possible pairs for comparison
-      const pairs = [];
-      for (let i = 0; i < files.length; i++) {
-        for (let j = i + 1; j < files.length; j++) {
-          pairs.push([i, j]);
-        }
-      }
-      
-      // Compare each pair
-      const pairResults = [];
-      for (const [i, j] of pairs) {
-        const result = await this.compareTwoPapers(
-          evaluations[i].filename, evaluations[i].evaluation,
-          evaluations[j].filename, evaluations[j].evaluation
-        );
-        pairResults.push({
-          pair: [i, j],
-          winner: result.winner, // 0 for first paper, 1 for second paper, 0.5 for tie
-          reasoning: result.reasoning
-        });
-      }
-      
-      // Count wins for ranking
-      const scores = Array(files.length).fill(0);
-      pairResults.forEach(result => {
-        if (result.winner === 0) scores[result.pair[0]] += 1;
-        else if (result.winner === 1) scores[result.pair[1]] += 1;
-        else {
-          // Tie - half point to each
-          scores[result.pair[0]] += 0.5;
-          scores[result.pair[1]] += 0.5;
-        }
-      });
-      
-      // Create final ranking
-      const ranking = files.map((file, index) => ({
-        filename: file.originalname,
-        score: scores[index],
-        evaluation: evaluations[index].evaluation
-      })).sort((a, b) => b.score - a.score);
-      
-      // Format final comparison result
-      const comparisonResult = this.formatPairwiseComparison(ranking, pairResults, files);
-      
-      return {
-        evaluation: comparisonResult,
-        success: true
-      };
-      
-    } catch (error) {
-      console.error("OpenAI pairwise comparison error:", error);
-      return {
-        success: false,
-        error: error.message || "Error comparing papers with OpenAI"
-      };
-    }
-  }
-  
-  async compareTwoPapers(filename1, evaluation1, filename2, evaluation2) {
-    try {
-      const prompt = `
-You are an expert in research methodology tasked with determining which of two research papers has higher methodological quality. Compare the following two papers based strictly on their methodology, evidence level, and overall research quality.
-
-PAPER 1: ${filename1}
-${evaluation1}
-
-PAPER 2: ${filename2}
-${evaluation2}
-
-Based ONLY on research methodology and evidence quality (not on the topic or findings), determine which paper has higher methodological quality. Consider:
-1. Evidence level (1-6, with 1 being highest)
-2. Study design rigor
-3. Protection against bias
-4. Quality of data collection and analysis
-5. Sample size and selection
-6. Methodological limitations
-
-Respond with:
-1. Which paper has higher methodological quality (specify either "PAPER 1" or "PAPER 2", or "TIE" if they are equivalent)
-2. A brief justification explaining your decision (100-200 words)
-`;
-
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert in research methodology comparing the quality of two research papers."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      });
-      
-      const responseText = response.choices[0].message.content;
-      
-      // Parse the winner from the response
-      let winner;
-      if (responseText.toLowerCase().includes("paper 1") && !responseText.toLowerCase().includes("paper 2 has higher")) {
-        winner = 0;
-      } else if (responseText.toLowerCase().includes("paper 2") && !responseText.toLowerCase().includes("paper 1 has higher")) {
-        winner = 1;
-      } else {
-        winner = 0.5; // Tie
-      }
-      
-      return {
-        winner: winner,
-        reasoning: responseText
-      };
-    } catch (error) {
-      console.error("Error comparing two papers:", error);
-      throw new Error("Failed to compare papers");
-    }
-  }
-  
-  formatPairwiseComparison(ranking, pairResults, files) {
-    // Format the overall ranking
-    let result = `# Research Paper Quality Comparison Results\n\n`;
-    result += `## Overall Ranking (Highest to Lowest Quality)\n\n`;
-    
-    ranking.forEach((paper, index) => {
-      result += `${index + 1}. **${paper.filename}** (Score: ${paper.score}/${pairResults.length})\n`;
-    });
-    
-    // Add individual paper evaluations (abbreviated)
-    result += `\n## Individual Paper Assessments\n\n`;
-    ranking.forEach(paper => {
-      // Extract just the key information from the full evaluation
-      const keyInfo = paper.evaluation.split('\n').filter(line => 
-        line.includes('Evidence Level') || 
-        line.includes('Quality Score') || 
-        line.includes('Study Type')
-      ).join('\n');
-      
-      result += `### ${paper.filename}\n${keyInfo}\n\n`;
-    });
-    
-    // Add pairwise comparison details
-    result += `\n## Pairwise Comparison Details\n\n`;
-    pairResults.forEach(result => {
-      const paper1 = files[result.pair[0]].originalname;
-      const paper2 = files[result.pair[1]].originalname;
-      let winnerText;
-      
-      if (result.winner === 0) winnerText = `**${paper1}** was determined to have higher quality than ${paper2}`;
-      else if (result.winner === 1) winnerText = `**${paper2}** was determined to have higher quality than ${paper1}`;
-      else winnerText = `**${paper1}** and **${paper2}** were determined to be of equal quality`;
-      
-      result += `### ${paper1} vs. ${paper2}\n${winnerText}\n\n`;
-    });
-    
-    // Add visualization recommendation
-    result += `\n## Key Findings Visualization\n\nA radar chart or bar chart comparing the key methodological aspects of these papers would be beneficial for visualization.\n`;
-    
-    return result;
-  }
-  
-  async fileToOpenAIPart(file) {
-    try {
-      // Upload the file to OpenAI
-      const fileUpload = await this.openai.files.create({
-        file: fs.createReadStream(file.path),
-        purpose: "assistants"
-      });
-      
-      // Return the file ID for use in API calls
-      return fileUpload.id;
-    } catch (error) {
-      console.error("Error uploading file to OpenAI:", error);
-      throw new Error("Failed to upload file to OpenAI");
     }
   }
 }
