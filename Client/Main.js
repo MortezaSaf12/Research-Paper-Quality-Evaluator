@@ -11,6 +11,7 @@ const evaluateButton = document.getElementById('evaluate-button');
 const resultContainer = document.createElement('div');
 resultContainer.id = 'result-container';
 resultContainer.className = 'result-container';
+resultContainer.style.display = 'none'; // Hide by default
 document.querySelector('.container').appendChild(resultContainer);
 
 // Loading spinner
@@ -126,6 +127,7 @@ removeButton.addEventListener('click', function() {
   selectedFiles = [];
   updateFileList();
   resultContainer.innerHTML = "";
+  resultContainer.style.display = 'none'; // Hide the result container
   errorMessage.textContent = "";
 });
 
@@ -135,6 +137,9 @@ evaluateButton.addEventListener('click', function() {
     errorMessage.textContent = "Please select at least one PDF file.";
     return;
   }
+  
+  // Hide any previous results
+  resultContainer.style.display = 'none';
   
   if (selectedFiles.length === 1) {
     // one file
@@ -149,7 +154,9 @@ function uploadSingleFile(file) {
   const formData = new FormData();
   formData.append('pdf', file);
 
+  // Show loading spinner, hide any previous results
   loadingSpinner.style.display = 'flex';
+  resultContainer.style.display = 'none';
   
   fetch('/api/pdf/upload', {
     method: 'POST',
@@ -189,7 +196,9 @@ function uploadMultipleFiles(files) {
     formData.append('pdfs', file);
   });
 
+  // Show loading spinner, hide any previous results
   loadingSpinner.style.display = 'flex';
+  resultContainer.style.display = 'none';
   resultContainer.innerHTML = "";
   
   fetch('/api/pdf/upload-multiple', {
@@ -225,22 +234,42 @@ function uploadMultipleFiles(files) {
 }
 
 function displayEvaluation(evaluation) {
+  // First, make sure we have content to display
+  if (!evaluation || evaluation.trim() === '') {
+    resultContainer.style.display = 'none';
+    return;
+  }
+  
+  // Then prepare and display the content
   resultContainer.innerHTML = `
     <h2>Paper Evaluation Results</h2>
     <div class="evaluation-content">
       ${formatEvaluation(evaluation)}
     </div>
   `;
+  
+  // Show the container and scroll to it
+  resultContainer.style.display = 'block';
   resultContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
 function displayComparison(evaluation) {
+  // First, make sure we have content to display
+  if (!evaluation || evaluation.trim() === '') {
+    resultContainer.style.display = 'none';
+    return;
+  }
+  
+  // Then prepare and display the content
   resultContainer.innerHTML = `
     <h2>Paper Comparison Results</h2>
     <div class="evaluation-content">
       ${formatEvaluation(evaluation)}
     </div>
   `;
+  
+  // Show the container and scroll to it
+  resultContainer.style.display = 'block';
   resultContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
