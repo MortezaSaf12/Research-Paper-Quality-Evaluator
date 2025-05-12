@@ -4,7 +4,6 @@ const uuid = require('uuid');
 const OpenAIService = require('../Services/OpenAIService');
 const openaiService = new OpenAIService();
 
-// Temporary in-memory store for uploaded files
 const uploadedFiles = {};
 
 // Upload single PDF
