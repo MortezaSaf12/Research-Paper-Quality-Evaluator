@@ -238,7 +238,7 @@ input[type="file"] {
   background-color: #f1f1f1;
 }
 
-/* Quality score visualization */
+
 .score-bar {
   height: 20px;
   background-color: #e9ecef;
@@ -266,3 +266,43 @@ input[type="file"] {
   background-color: #28a745;
 }
 
+.download-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+
+.download-button {
+  display: flex;
+  align-items: center;
+  background-color: #28a745;
+  padding: 10px 20px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.download-button:hover {
+  background-color: #218838;
+}
+
+
+.download-icon {
+  margin-right: 8px;
+  font-size: 1.2em;
+}
+
+
+.pdf-loading {
+  margin-left: 10px;
+  font-style: italic;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

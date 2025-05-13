@@ -233,6 +233,11 @@ function uploadMultipleFiles(files) {
     });
 }
 
+
+
+// First, let's modify the main.js file by adding the PDF download functionality
+
+// Update the displayEvaluation function to include a download button
 function displayEvaluation(evaluation) {
   // First, make sure we have content to display
   if (!evaluation || evaluation.trim() === '') {
@@ -246,13 +251,24 @@ function displayEvaluation(evaluation) {
     <div class="evaluation-content">
       ${formatEvaluation(evaluation)}
     </div>
+    <div class="download-container">
+      <button id="download-pdf-button" class="button download-button">
+         Download as PDF
+      </button>
+    </div>
   `;
+  
+  // Add event listener to the download button
+  document.getElementById('download-pdf-button').addEventListener('click', function() {
+    generatePDF('Paper Evaluation Results', evaluation);
+  });
   
   // Show the container and scroll to it
   resultContainer.style.display = 'block';
   resultContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
+// Update the displayComparison function to include a download button
 function displayComparison(evaluation) {
   // First, make sure we have content to display
   if (!evaluation || evaluation.trim() === '') {
@@ -266,15 +282,199 @@ function displayComparison(evaluation) {
     <div class="evaluation-content">
       ${formatEvaluation(evaluation)}
     </div>
+    <div class="download-container">
+      <button id="download-pdf-button" class="button download-button">
+        <span class="download-icon">⬇️</span> Download as PDF
+      </button>
+    </div>
   `;
+  
+  // Add event listener to the download button
+  document.getElementById('download-pdf-button').addEventListener('click', function() {
+    generatePDF('Paper Comparison Results', evaluation);
+  });
   
   // Show the container and scroll to it
   resultContainer.style.display = 'block';
   resultContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
+// Add the PDF generation function
+function generatePDF(title, content) {
+  // Create a loading indicator
+  const loadingIndicator = document.createElement('span');
+  loadingIndicator.className = 'pdf-loading';
+  loadingIndicator.textContent = ' Generating PDF...';
+  document.getElementById('download-pdf-button').appendChild(loadingIndicator);
+
+
+  setTimeout(() => {
+    try {
+  
+      const { jsPDF } = window.jspdf;
+      
+ 
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // fontsize
+      pdf.setFontSize(12);
+      
+      // font type + title
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(title, 20, 20);
+      
+      // Current date
+      const currentDate = new Date().toLocaleDateString();
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text(`Generated: ${currentDate}`, 20, 30);
+      
+      // Format the content for PDF
+      const contentDiv = document.querySelector('.evaluation-content').innerHTML;
+      
+      // Create a temporary div to convert HTML to plain text
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = contentDiv;
+      
+      // Extract structured content
+      let formattedContent = formatContentForPDF(tempDiv);
+      
+      // Start y position for content
+      let yPos = 40;
+      const lineHeight = 7;
+      const margin = 20;
+      const pageWidth = 210;
+      const contentWidth = pageWidth - (margin * 2);
+      
+      // Add content sections with formatting
+      formattedContent.forEach(section => {
+        // Check if we need to add a new page
+        if (yPos > 270) {
+          pdf.addPage();
+          yPos = 20;
+        }
+        
+        if (section.type === 'heading') {
+          // Add some spacing before headings
+          if (yPos > 40) yPos += 5;
+          
+          pdf.setFontSize(14);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(section.text, margin, yPos);
+          yPos += lineHeight;
+        } 
+        else if (section.type === 'subheading') {
+          // Add pacing before subheadings
+          yPos += 3;
+          
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(section.text, margin, yPos);
+          yPos += lineHeight;
+        }
+        else if (section.type === 'paragraph') {
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          const splitText = pdf.splitTextToSize(section.text, contentWidth);
+          
+          // Check if we need to add a new page
+          if (yPos + (splitText.length * (lineHeight - 2)) > 280) {
+            pdf.addPage();
+            yPos = 20;
+          }
+          
+          pdf.text(splitText, margin, yPos);
+          yPos += (splitText.length * (lineHeight - 2)) + 2;
+        }
+        else if (section.type === 'listItem') {
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          const itemText = `• ${section.text}`;
+          const splitText = pdf.splitTextToSize(itemText, contentWidth - 5);
+          
+          //do we need to add a new page to the pdf?
+          if (yPos + (splitText.length * (lineHeight - 2)) > 280) {
+            pdf.addPage();
+            yPos = 20;
+          }
+          
+          pdf.text(splitText, margin + 5, yPos);
+          yPos += (splitText.length * (lineHeight - 2)) + 1;
+        }
+      });
+      
+      // Filename from title + date
+      const filename = `${title.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+      
+      // Save pdf
+      pdf.save(filename);
+      
+      // remove loading symbol
+      loadingIndicator.remove();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      loadingIndicator.textContent = ' Failed to generate PDF';
+      loadingIndicator.style.color = '#dc3545';
+      
+     
+      setTimeout(() => {
+        loadingIndicator.remove();
+      }, 3000);
+    }
+  }, 100);
+}
+
+function formatContentForPDF(contentElement) {
+  const result = [];
+  
+  // Process node and its children
+  function processNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent.trim();
+      if (text) {
+
+        if (node.parentElement && (node.parentElement.tagName === 'LI' || 
+            (node.parentElement.parentElement && node.parentElement.parentElement.tagName === 'LI'))) {
+          result.push({ type: 'listItem', text });
+        } else {
+          result.push({ type: 'paragraph', text });
+        }
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+
+      if (node.tagName === 'H3') {
+        result.push({ type: 'heading', text: node.textContent.trim() });
+      } else if (node.tagName === 'STRONG' && node.textContent.includes('Key Finding')) {
+        result.push({ type: 'subheading', text: node.textContent.trim() });
+      } else if (node.tagName === 'STRONG' && node.parentElement.tagName !== 'LI') {
+        result.push({ type: 'subheading', text: node.textContent.trim() });
+      } else if (['UL', 'OL'].includes(node.tagName)) {
+
+        Array.from(node.childNodes).forEach(processNode);
+      } else if (node.tagName === 'LI') {
+        result.push({ type: 'listItem', text: node.textContent.trim() });
+      } else if (node.tagName === 'P' && node.textContent.trim()) {
+        result.push({ type: 'paragraph', text: node.textContent.trim() });
+      } else {
+
+        Array.from(node.childNodes).forEach(processNode);
+      }
+    }
+  }
+  
+
+  Array.from(contentElement.childNodes).forEach(processNode);
+  
+  return result;
+}
+
 function formatEvaluation(text) {
-  // Convert markdown-like text from OpenAI to HTML
+
   return text
     .replace(/\n\n/g, '</p><p>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
