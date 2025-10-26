@@ -69,7 +69,7 @@ determine which sources meet the highest quality standards. This process can tak
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/research-paper-quality-evaluator.git
+git clone https://github.com/MortezaSaf12/Research-Paper-Quality-Evaluator.git
 cd research-paper-quality-evaluator
 ```
 
@@ -94,3 +94,4 @@ node Server.js
 ## Authors
 - Morteza Safari
 - Oscar Assaf
+
